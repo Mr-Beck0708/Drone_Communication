@@ -2,10 +2,9 @@
   "drone_id": "DRONE-RASPI-01",
   "role": "drone",
   "network": {
-    "control_station_host": "192.168.1.100",
+    "listen_host": "0.0.0.0",
     "port": 8443,
-    "reconnect_attempts": 5,
-    "reconnect_delay": 3
+    "max_connections": 5
   },
   "wifi_scanner": {
     "scan_interval": 5.0,

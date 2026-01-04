@@ -2,9 +2,8 @@
     "operator_id": "OP-001",
     "role": "control_station",
     "network": {
-        "listen_host": "0.0.0.0",
-        "port": 8443,
-        "max_connections": 5
+        "drone_host": "192.168.29.123",
+        "port": 8443
     },
     "telemetry": {
         "log_to_file": false,

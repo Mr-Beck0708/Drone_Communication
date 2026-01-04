@@ -55,27 +55,23 @@ class ControlStationApplication:
         self.sign_pk = self.sig.generate_keypair()
         self.logger.info("Cryptographic keys generated", operator_id=self.operator_id)
     
-    def start_server(self, host: str, port: int):
-        """Start TCP server and listen for drone connections."""
-        self.logger.info("Starting control station server", host=host, port=port)
+    def connect_to_drone(self, host: str, port: int):
+        """Connect to drone server."""
+        self.logger.info("Connecting to drone", host=host, port=port)
         
         try:
-            self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            self.server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.server_socket.bind((host, port))
-            self.server_socket.listen(1)
+            print(f"\n📡 Connecting to Drone at {host}:{port}...")
             
-            print(f"\n📡 Control Station listening on {host}:{port}")
-            print("Waiting for drone connection...\n")
-            
-            self.client_socket, client_addr = self.server_socket.accept()
+            self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.client_socket.settimeout(10)
+            self.client_socket.connect((host, port))
             self.connected = True
             
-            print(f"✓ Drone connected from {client_addr[0]}:{client_addr[1]}\n")
-            self.logger.info("Drone connected", address=client_addr)
+            print(f"✓ Connected to drone\n")
+            self.logger.info("Connected to drone")
             
         except Exception as e:
-            self.logger.error("Failed to start server", error=str(e))
+            self.logger.error("Failed to connect to drone", error=str(e))
             raise
     
     def perform_key_exchange(self):
@@ -329,16 +325,10 @@ class ControlStationApplication:
         except:
             pass
         
-        # Close sockets
+        # Close socket
         if self.client_socket:
             try:
                 self.client_socket.close()
-            except:
-                pass
-        
-        if self.server_socket:
-            try:
-                self.server_socket.close()
             except:
                 pass
         
@@ -352,9 +342,9 @@ class ControlStationApplication:
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Control Station Application")
-    parser.add_argument("--host", type=str, default="0.0.0.0",
-                       help="Listen address (default: 0.0.0.0 for all interfaces)")
-    parser.add_argument("--port", type=int, help="Listen port")
+    parser.add_argument("--host", type=str,
+                       help="Drone IP address to connect to")
+    parser.add_argument("--port", type=int, help="Drone port")
     parser.add_argument("--config", type=str, default="config/control_station_config.json",
                        help="Configuration file path")
     parser.add_argument("--operator-id", type=str, help="Operator identifier")
@@ -370,15 +360,21 @@ def main():
     
     # Override with CLI arguments
     if args.host:
-        config.set("network.listen_host", args.host)
+        config.set("network.drone_host", args.host)
     if args.port:
         config.set("network.port", args.port)
     if args.operator_id:
         config.set("operator_id", args.operator_id)
     
     # Get server parameters
-    host = config.get("network.listen_host", "0.0.0.0")
+    host = config.get("network.drone_host")
     port = config.get("network.port", 8443)
+    
+    if not host:
+        print("Error: Drone host not specified!")
+        print("Use --host <DRONE_IP> or set in config file")
+        print(f"\nExample: python3 {sys.argv[0]} --host 192.168.29.123")
+        sys.exit(1)
     
     # Create and run control station
     control_station = ControlStationApplication(config)
@@ -394,9 +390,10 @@ def main():
     
     try:
         print("\n" + "=" * 80)
-        print("CONTROL STATION - WiFi Network Intelligence")
+        print("CONTROL STATION - WiFi Network Intelligence (CLIENT MODE)")
         print("=" * 80)
         print(f"Operator ID: {control_station.operator_id}")
+        print(f"Connecting to Drone: {host}:{port}")
         print(f"Post-Quantum Cryptography: ENABLED")
         print(f"  - Hybrid Key Exchange: X448 + Kyber768")
         print(f"  - Signatures: Dilithium3")
@@ -404,7 +401,7 @@ def main():
         print("=" * 80)
         
         control_station.initialize_crypto()
-        control_station.start_server(host, port)
+        control_station.connect_to_drone(host, port)
         control_station.perform_key_exchange()
         
         # Send start scan command
