@@ -1,0 +1,28 @@
+{
+  "drone_id": "DRONE-RASPI-01",
+  "role": "drone",
+  "network": {
+    "control_station_host": "192.168.1.100",
+    "port": 8443,
+    "reconnect_attempts": 5,
+    "reconnect_delay": 3
+  },
+  "wifi_scanner": {
+    "scan_interval": 5.0,
+    "scan_tool": "auto",
+    "include_hidden": false,
+    "max_networks": 50
+  },
+  "telemetry": {
+    "log_to_file": true,
+    "log_file": "network_scans.json"
+  },
+  "crypto": {
+    "kyber_variant": "Kyber768",
+    "dilithium_variant": "Dilithium3"
+  },
+  "logging": {
+    "level": "INFO",
+    "telemetry_enabled": true
+  }
+}

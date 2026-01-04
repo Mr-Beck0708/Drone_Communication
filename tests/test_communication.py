@@ -4,6 +4,7 @@ Unit tests for communication modules.
 
 import pytest
 import time
+import os
 from src.communication import Session, TelemetryLogger, NetworkMonitor, SecureChannel
 from src.crypto import ChaCha20Poly1305Cipher, DilithiumSignature
 
@@ -76,7 +77,7 @@ class TestNetworkMonitor:
         monitor.record_latency(0.10)
         
         avg = monitor.get_average_latency()
-        assert avg == 75.0  # (50ms + 100ms) / 2
+        assert avg == pytest.approx(75.0)  # (50ms + 100ms) / 2
     
     def test_packet_loss_tracking(self):
         """Test packet loss tracking."""
@@ -96,7 +97,7 @@ class TestSecureChannel:
     
     def test_send_receive(self):
         """Test sending and receiving messages."""
-        shared_secret = ChaCha20Poly1305Cipher.generate_key()
+        shared_secret = os.urandom(32)  # Generate 256-bit key
         channel = SecureChannel(shared_secret)
         
         plaintext = b"Test message"
@@ -107,7 +108,7 @@ class TestSecureChannel:
     
     def test_send_receive_with_signature(self):
         """Test signed messages."""
-        shared_secret = ChaCha20Poly1305Cipher.generate_key()
+        shared_secret = os.urandom(32)  # Generate 256-bit key
         sig = DilithiumSignature()
         public_key = sig.generate_keypair()
         
