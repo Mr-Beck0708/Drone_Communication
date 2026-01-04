@@ -164,8 +164,18 @@ class ControlStationApplication:
         """Handle scan data from drone."""
         try:
             # Decrypt and verify
-            encrypted_payload = bytes.fromhex(data["payload"])
-            decrypted_data = self.channel.receive(encrypted_payload, self.drone_sign_pk)
+            payload = data["payload"]
+            
+            # Reconstruct message for SecureChannel
+            encrypted_msg = {
+                "nonce": bytes.fromhex(payload["nonce"]),
+                "ciphertext": bytes.fromhex(payload["ciphertext"]),
+                "counter": payload["counter"]
+            }
+            if "signature" in payload:
+                encrypted_msg["signature"] = bytes.fromhex(payload["signature"])
+            
+            decrypted_data = self.channel.receive(encrypted_msg, self.drone_sign_pk)
             
             # Parse scan result
             scan_result = json.loads(decrypted_data.decode('utf-8'))
