@@ -358,6 +358,10 @@ def main():
     parser.add_argument("--config", type=str, default="config/control_station_config.json",
                        help="Configuration file path")
     parser.add_argument("--operator-id", type=str, help="Operator identifier")
+    parser.add_argument("--web", action="store_true",
+                       help="Launch web dashboard (access via browser)")
+    parser.add_argument("--web-port", type=int, default=5000,
+                       help="Web dashboard port (default: 5000)")
     
     args = parser.parse_args()
     
@@ -417,8 +421,16 @@ def main():
         # Send start scan command
         control_station.send_command("START_SCAN")
         
-        # Receive and display data
-        control_station.receive_data_loop()
+        # Choose mode: web dashboard or CLI
+        if args.web:
+            from web_dashboard import start_dashboard
+            print(f"\n🌐 Starting web dashboard on port {args.web_port}...")
+            start_dashboard(control_station, host='0.0.0.0', port=args.web_port)
+            # Receive and process data in background
+            control_station.receive_data_loop()
+        else:
+            # Traditional CLI mode
+            control_station.receive_data_loop()
         
     except KeyboardInterrupt:
         print("\n\nShutdown requested...")
