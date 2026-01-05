@@ -1,117 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WiFi Network Intelligence Dashboard</title>
+    <title>WiFi Intelligence - Wireshark Mode</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
+
 <body>
-    <div class="container">
-        <!-- Header -->
-        <header class="dashboard-header">
-            <div class="header-left">
-                <h1>🚁 WiFi Network Intelligence Dashboard</h1>
-<p class="subtitle">Post-Quantum Secure Communication</p>
+    <div class="wireshark-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="tool-group">
+                <button class="tool-btn active" title="Start Capture"><i class="material-icons">play_arrow</i></button>
+                <button class="tool-btn" title="Stop Capture"><i class="material-icons">stop</i></button>
+                <button class="tool-btn" title="Restart"><i class="material-icons">refresh</i></button>
             </div>
-            <div class="header-right">
-                <div class="status-indicator">
-                    <span id="drone-status" class="status-dot disconnected"></span>
-                    <span id="drone-name">Drone: Disconnected</span>
+            <div class="separator"></div>
+            <div class="tool-group">
+                <button class="tool-btn" title="Options"><i class="material-icons">settings</i></button>
+            </div>
+            <div class="separator"></div>
+            <div class="filter-bar">
+                <span class="filter-label">Apply a display filter ... &lt;Ctrl-/&gt;</span>
+                <input type="text" id="wireshark-filter" placeholder="ssid contains 'Home' or signal > -60">
+                <button class="filter-apply-btn">Apply</button>
+            </div>
+        </div>
+
+        <!-- Main Split View -->
+        <div class="main-content">
+            <!-- Pane 1: Network List (Packet List) -->
+            <div class="pane panel-list">
+                <div class="pane-header">Network List</div>
+                <div class="table-scroll">
+                    <table class="ws-table" id="networks-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">No.</th>
+                                <th style="width: 100px;">Time</th>
+                                <th style="width: 150px;">BSSID (Source)</th>
+                                <th style="width: 200px;">SSID (Info)</th>
+                                <th style="width: 80px;">Channel</th>
+                                <th style="width: 100px;">Signal</th>
+                                <th style="width: 120px;">Protocol</th>
+                                <th>Frequency</th>
+                            </tr>
+                        </thead>
+                        <tbody id="networks-tbody">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                    </table>
                 </div>
-                <div class="status-indicator">
-                    <span id="client-status" class="status-dot disconnected"></span>
-                    <span>Dashboard: Connecting...</span>
+            </div>
+
+            <!-- Pane 2: Details (Packet Details) -->
+            <div class="pane panel-details">
+                <div class="pane-header">Network Details</div>
+                <div class="details-content" id="details-content">
+                    <div class="placeholder-text">Select a network to view details</div>
                 </div>
             </div>
-        </header>
 
-        <!-- Statistics Panel -->
-        <section class="stats-panel">
-            <div class="stat-card">
-                <div class="stat-label">Total Networks</div>
-                <div class="stat-value" id="stat-total">0</div>
+            <!-- Pane 3: Bytes/Graphs (Packet Bytes - Replaced visually with Signal Graph) -->
+            <div class="pane panel-bytes">
+                <div class="pane-header">Signal Analysis</div>
+                <div class="graph-container">
+                    <canvas id="signal-chart"></canvas>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Avg Signal</div>
-                <div class="stat-value" id="stat-avg">0 dBm</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Strongest</div>
-                <div class="stat-value" id="stat-strongest">-</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Scans</div>
-                <div class="stat-value" id="stat-scans">0</div>
-            </div>
-        </section>
+        </div>
 
-        <!-- Controls -->
-        <section class="controls-panel">
-            <div class="control-group">
-                <input type="text"  id="search-input" placeholder="🔍 Search SSID..." class="search-box">
-                <select id="filter-security" class="filter-select">
-                    <option value="">All Security Types</option>
-                    <option value="WPA3">WPA3</option>
-                    <option value="WPA2">WPA2</option>
-                    <option value="WEP">WEP</option>
-                    <option value="Open">Open</option>
-                </select>
-                <select id="filter-signal" class="filter-select">
-                    <option value="">All Signals</option>
-                    <option value="strong">Strong (> -60 dBm)</option>
-                    <option value="medium">Medium (-60 to -75 dBm)</option>
-                    <option value="weak">Weak (< -75 dBm)</option>
-                </select>
-                <button id="export-btn" class="btn-export">💾 Export CSV</button>
+        <!-- Status Bar -->
+        <footer class="ws-statusbar">
+            <div class="status-left">
+                <span id="status-icon" class="status-green"></span>
+                <span id="connection-text">Ready to load</span>
             </div>
-        </section>
-
-        <!-- Networks Table -->
-        <section class="networks-section">
-            <h2>Live Network Scan</h2>
-            <div class="table-container">
-                <table class="networks-table" id="networks-table">
-                    <thead>
-                        <tr>
-                            <th>SSID</th>
-                            <th>Signal</th>
-                            <th>Security</th>
-                            <th>Channel</th>
-                            <th>BSSID</th>
-                            <th>Frequency</th>
-                        </tr>
-                    </thead>
-                    <tbody id="networks-tbody">
-                        <tr class="no-data">
-                            <td colspan="6">Waiting for scan data...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div class="status-right">
+                <span id="packet-count">Packets: 0</span> ·
+                <span id="profile-name">Profile: Default</span>
             </div>
-        </section>
-
-        <!-- Charts Section -->
-        <section class="charts-section">
-            <div class="chart-container">
-                <h3>Signal Strength Distribution</h3>
-                <canvas id="signal-chart"></canvas>
-            </div>
-            <div class="chart-container">
-                <h3>Security Types</h3>
-                <canvas id="security-chart"></canvas>
-            </div>
-        </section>
-
-        <!-- Footer -->
-        <footer class="dashboard-footer">
-            <p>Last Update: <span id="last-update">Never</span></p>
-            <p>Encrypted with X448 + Kyber768 | Signed with Dilithium3 | ChaCha20-Poly1305</p>
         </footer>
     </div>
 
     <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 </body>
+
 </html>
