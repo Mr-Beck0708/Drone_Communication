@@ -65,9 +65,11 @@
 **Supported Platforms:**
 - Linux (x86_64, ARM64/aarch64)
 - macOS
-- Windows (WSL recommended)
+- Windows 10/11 (native support)
 
 ### 1. Install System Dependencies
+
+> **🪟 Windows Users**: For detailed Windows installation instructions, see **[INSTALL_WINDOWS.md](INSTALL_WINDOWS.md)**
 
 #### Ubuntu/Debian/Kali:
 ```bash
@@ -80,11 +82,16 @@ sudo apt-get install -y cmake ninja-build libssl-dev git python3-venv
 brew install cmake ninja openssl
 ```
 
+#### Windows:
+See the comprehensive **[Windows Installation Guide](INSTALL_WINDOWS.md)** for prerequisites and setup.
+
 ### 2. Build and Install liboqs
 
+**Note**: On Windows with `liboqs-python>=0.12.0`, the library auto-installs on first import. For manual installation or troubleshooting, see [INSTALL_WINDOWS.md](INSTALL_WINDOWS.md).
+
 ```bash
-# Clone liboqs library
-git clone --depth 1 --branch 0.14.0 https://github.com/open-quantum-safe/liboqs.git /tmp/liboqs
+# Clone liboqs library (Linux/macOS)
+git clone --depth 1 --branch 0.15.0 https://github.com/open-quantum-safe/liboqs.git /tmp/liboqs
 
 # Build
 cd /tmp/liboqs
@@ -106,13 +113,22 @@ cd Drone_Communication
 
 # Create virtual environment
 python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: .venv\Scripts\Activate.ps1
 
 # Install dependencies
+pip install --upgrade pip
 pip install -r requirements.txt
 
 # Install package in development mode
 pip install -e .
+```
+
+**Windows PowerShell**:
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install --upgrade pip
+pip install -r requirements.txt
 ```
 
 ## ⚡ Quick Start

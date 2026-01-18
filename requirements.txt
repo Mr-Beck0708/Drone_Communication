@@ -3,6 +3,8 @@ cryptography>=41.0.0
 pycryptodome>=3.19.0
 
 # Post-Quantum Cryptography
+# Note: liboqs-python 0.14.1 has a known installation bug on Windows
+# The library will use fallback dummy implementations if liboqs fails to install
 liboqs-python>=0.10.0
 
 # Networking

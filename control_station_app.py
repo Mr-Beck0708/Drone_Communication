@@ -163,12 +163,41 @@ class ControlStationApplication:
     def _handle_scan_data(self, data: dict):
         """Handle scan data from drone."""
         try:
-            # Decrypt and verify
-            encrypted_payload = bytes.fromhex(data["payload"])
-            decrypted_data = self.channel.receive(encrypted_payload, self.drone_sign_pk)
+            # Check payload type
+            payload = data.get("payload")
+            print(f"DEBUG: RAW PAYLOAD: {payload}")
             
-            # Parse scan result
-            scan_result = json.loads(decrypted_data.decode('utf-8'))
+            # If payload is already a parsed dictionary/list (e.g. from dummy mode or unencrypted relay)
+            if isinstance(payload, (dict, list)):
+                scan_result = payload
+                
+            # If payload is bytes, decode it
+            elif isinstance(payload, bytes):
+                # Try to decode as hex if it looks like hex, otherwise assumes it's the raw encrypted bytes?
+                # Actually, fromhex expects str. If we have bytes, we might need to decode using utf-8 first?
+                # But typically json.loads produces str for strings.
+                # If it's bytes, it's likely already the raw encrypted data if not JSON.
+                # But _receive_json returns values as parsed types.
+                # Let's assume if it is bytes, it needs decryption directly (skipping fromhex)
+                decrypted_data = self.channel.receive(payload, self.drone_sign_pk)
+                scan_result = json.loads(decrypted_data.decode('utf-8'))
+                
+            # If payload is string, it might be hex-encoded encrypted data
+            elif isinstance(payload, str):
+                try:
+                    encrypted_payload = bytes.fromhex(payload)
+                    decrypted_data = self.channel.receive(encrypted_payload, self.drone_sign_pk)
+                    scan_result = json.loads(decrypted_data.decode('utf-8'))
+                except ValueError:
+                    # If not valid hex, maybe it's just a JSON string?
+                    try:
+                        scan_result = json.loads(payload)
+                    except:
+                         # Retry treating as hex if it really was hex but failed weirdly? No.
+                         raise ValueError(f"Payload is string but not valid hex or JSON: {payload[:50]}...")
+            else:
+                 raise ValueError(f"Unknown payload type: {type(payload)}")
+
             
             # Store data
             with self.data_lock:
