@@ -174,11 +174,20 @@ class DroneApplication:
             # Encrypt and sign
             encrypted_msg = self.channel.send(data_bytes, sign=True)
             
+            # Serialize payload (convert bytes to hex for JSON)
+            serialized_payload = {
+                "nonce": encrypted_msg["nonce"].hex(),
+                "ciphertext": encrypted_msg["ciphertext"].hex(),
+                "counter": encrypted_msg["counter"]
+            }
+            if "signature" in encrypted_msg:
+                serialized_payload["signature"] = encrypted_msg["signature"].hex()
+            
             # Send to control station
             msg_data = {
                 "type": "scan_data",
                 "drone_id": self.drone_id,
-                "payload": encrypted_msg.hex()
+                "payload": serialized_payload
             }
             self._send_json(msg_data)
             

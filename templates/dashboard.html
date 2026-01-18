@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WiFi Intelligence - Wireshark Mode</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+
+<body>
+    <div class="wireshark-container">
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="tool-group">
+                <button class="tool-btn active" title="Start Capture"><i class="material-icons">play_arrow</i></button>
+                <button class="tool-btn" title="Stop Capture"><i class="material-icons">stop</i></button>
+                <button class="tool-btn" title="Restart"><i class="material-icons">refresh</i></button>
+            </div>
+            <div class="separator"></div>
+            <div class="tool-group">
+                <button class="tool-btn" title="Options"><i class="material-icons">settings</i></button>
+            </div>
+            <div class="separator"></div>
+            <div class="filter-bar">
+                <span class="filter-label">Apply a display filter ... &lt;Ctrl-/&gt;</span>
+                <input type="text" id="wireshark-filter" placeholder="ssid contains 'Home' or signal > -60">
+                <button class="filter-apply-btn">Apply</button>
+            </div>
+        </div>
+
+        <!-- Main Split View -->
+        <div class="main-content">
+            <!-- Pane 1: Network List (Packet List) -->
+            <div class="pane panel-list">
+                <div class="pane-header">Network List</div>
+                <div class="table-scroll">
+                    <table class="ws-table" id="networks-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 50px;">No.</th>
+                                <th style="width: 100px;">Time</th>
+                                <th style="width: 150px;">BSSID (Source)</th>
+                                <th style="width: 200px;">SSID (Info)</th>
+                                <th style="width: 80px;">Channel</th>
+                                <th style="width: 100px;">Signal</th>
+                                <th style="width: 120px;">Protocol</th>
+                                <th>Frequency</th>
+                            </tr>
+                        </thead>
+                        <tbody id="networks-tbody">
+                            <!-- Rows injected by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pane 2: Details (Packet Details) -->
+            <div class="pane panel-details">
+                <div class="pane-header">Network Details</div>
+                <div class="details-content" id="details-content">
+                    <div class="placeholder-text">Select a network to view details</div>
+                </div>
+            </div>
+
+            <!-- Pane 3: Bytes/Graphs (Packet Bytes - Replaced visually with Signal Graph) -->
+            <div class="pane panel-bytes">
+                <div class="pane-header">Signal Analysis</div>
+                <div class="graph-container">
+                    <canvas id="signal-chart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Bar -->
+        <footer class="ws-statusbar">
+            <div class="status-left">
+                <span id="status-icon" class="status-green"></span>
+                <span id="connection-text">Ready to load</span>
+            </div>
+            <div class="status-right">
+                <span id="packet-count">Packets: 0</span> ·
+                <span id="profile-name">Profile: Default</span>
+            </div>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+
+</html>
